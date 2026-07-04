@@ -150,16 +150,55 @@
         });
     });
 
+    // \u2500\u2500 Normalizaci\u00f3n y tolerancia a errores de escritura \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
+    function normalizarTexto(texto) {
+        return texto
+            .toLowerCase()
+            .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+            .replace(/[^a-z0-9\s]/g, ' ')
+            .replace(/\s+/g, ' ')
+            .trim();
+    }
+
+    function distanciaEdicion(a, b) {
+        const filas = a.length + 1;
+        const columnas = b.length + 1;
+        const dp = Array.from({ length: filas }, () => new Array(columnas).fill(0));
+        for (let i = 0; i < filas; i++) dp[i][0] = i;
+        for (let j = 0; j < columnas; j++) dp[0][j] = j;
+        for (let i = 1; i < filas; i++) {
+            for (let j = 1; j < columnas; j++) {
+                dp[i][j] = a[i - 1] === b[j - 1]
+                    ? dp[i - 1][j - 1]
+                    : 1 + Math.min(dp[i - 1][j - 1], dp[i - 1][j], dp[i][j - 1]);
+            }
+        }
+        return dp[filas - 1][columnas - 1];
+    }
+
+    function palabrasCoinciden(palabraInput, palabraTag) {
+        if (palabraInput === palabraTag) return true;
+        if (palabraTag.length <= 3) return false; // muy corta: exige coincidencia exacta
+        const toleranciaMax = palabraTag.length <= 6 ? 1 : 2;
+        return distanciaEdicion(palabraInput, palabraTag) <= toleranciaMax;
+    }
+
+    function tagCoincideConTexto(tagClean, tokensInput) {
+        const palabrasTag = tagClean.split(' ');
+        return palabrasTag.every(palabraTag => tokensInput.some(palabraInput => palabrasCoinciden(palabraInput, palabraTag)));
+    }
+
     function getBotResponse(input) {
-        const clean = input.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+        const clean = normalizarTexto(input);
+        const tokensInput = clean.split(' ').filter(Boolean);
         let best = null;
         let bestScore = 0;
         let bestPriority = -1;
         for (const entry of KB) {
             const priority = entry.priority || 0;
             for (const tag of entry.tags) {
-                const tagClean = tag.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
-                if (clean.includes(tagClean)) {
+                const tagClean = normalizarTexto(tag);
+                if (tagCoincideConTexto(tagClean, tokensInput)) {
                     const score = tagClean.length;
                     if (priority > bestPriority || (priority === bestPriority && score > bestScore)) {
                         bestPriority = priority; bestScore = score; best = entry;
