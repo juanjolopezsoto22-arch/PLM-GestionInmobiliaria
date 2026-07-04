@@ -36,15 +36,52 @@
     }
 
     // \u2500\u2500 Base de conocimiento del asistente \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
-    const DEFAULT_RESPONSE = 'No tengo informaci\u00f3n exacta sobre eso \ud83e\udd14. Puedo ayudarte con propiedades, precios, servicios, UF y D\u00f3lar, o contacto. Si prefieres, escr\u00edbenos directo por **WhatsApp** y un asesor te responder\u00e1 enseguida.';
+    const DEFAULT_RESPONSE = '\u00a1Ok! \ud83d\udc4d Aqu\u00ed estoy, cualquier cosa que necesites saber sobre PLM Gesti\u00f3n Inmobiliaria, solo pregunta.';
+
+    function listarPropiedades(lista, introText) {
+        if (!lista.length) {
+            return '\u00a1Es una propiedad espectacular! \ud83c\udfe1 Cu\u00e9ntame la comuna (Algarrobo, Macul, Providencia, San Miguel, Santiago Centro o Calera de Tango) o el tipo (casa, departamento, parcela) y te paso los datos exactos.';
+        }
+        const items = lista.map(p => `\u2022 **${p.titulo}** \u2014 ${p.precio}. ${p.detalles}`).join('\n');
+        return `${introText}\n\n${items}`;
+    }
 
     const KB = [
         {
-            tags: ['propiedad', 'propiedades', 'departamento', 'departamentos', 'casa', 'casas', 'parcela', 'parcelas', 'inmueble', 'inmuebles', 'venta', 'arriendo'],
-            responder: () => {
-                const lista = propiedadesDB.map(p => `\u2022 **${p.titulo}** \u2014 ${p.precio} (${p.comuna})`).join('\n');
-                return `Estas son algunas de nuestras propiedades destacadas:\n\n${lista}\n\nPuedes ver todos los detalles y filtrar por tipo o comuna en la secci\u00f3n **Propiedades Destacadas** de la p\u00e1gina.`;
-            }
+            tags: ['hola', 'buenas', 'buenos dias', 'buenas tardes', 'buenas noches', 'hey', 'que tal'],
+            responder: () => `\u00a1Hola! \ud83d\udc4b \u00bfEn qu\u00e9 puedo ayudarte hoy?`
+        },
+        {
+            tags: ['como estas', 'como andas', 'como te va', 'todo bien'],
+            responder: () => `\u00a1Muy bien, gracias! \ud83d\ude0a Dispuesto a ayudarte en lo que necesites sobre PLM Gesti\u00f3n Inmobiliaria.`
+        },
+        {
+            tags: ['precio del dolar', 'precio del uf', 'valor del dolar', 'valor del uf', 'precio dolar', 'precio uf', 'valor dolar', 'valor uf', 'cuanto esta el dolar', 'cuanto esta el uf', 'cuanto vale el dolar', 'cuanto vale el uf', 'uf', 'dolar', 'indicador', 'indicadores'],
+            responder: () => `Los valores de hoy son:\n\n**UF:** ${getUF()}\n**D\u00f3lar:** ${getDolar()}\n\nEstos datos se actualizan autom\u00e1ticamente desde el Diario Financiero.`
+        },
+        {
+            tags: ['propiedad', 'propiedades', 'inmueble', 'inmuebles', 'venta', 'arriendo'],
+            responder: () => listarPropiedades(propiedadesDB, 'Estas son nuestras propiedades destacadas:') + '\n\nPuedes ver todos los detalles y filtrar por tipo o comuna en la secci\u00f3n **Propiedades Destacadas** de la p\u00e1gina.'
+        },
+        {
+            priority: 1,
+            tags: ['departamento', 'departamentos', 'depto', 'deptos'],
+            responder: () => listarPropiedades(propiedadesDB.filter(p => p.tipo === 'departamento'), 'Estos son los departamentos disponibles:')
+        },
+        {
+            priority: 1,
+            tags: ['casa', 'casas'],
+            responder: () => listarPropiedades(propiedadesDB.filter(p => p.tipo === 'casa'), 'Estas son las casas disponibles:')
+        },
+        {
+            priority: 1,
+            tags: ['parcela', 'parcelas', 'terreno', 'terrenos'],
+            responder: () => listarPropiedades(propiedadesDB.filter(p => p.tipo === 'parcela'), 'Estas son las parcelas disponibles:')
+        },
+        {
+            priority: 1,
+            tags: ['comercial', 'galpon', 'bodega', 'oficina', 'oficinas'],
+            responder: () => listarPropiedades(propiedadesDB.filter(p => p.tipo === 'comercial'), 'Estas son las propiedades comerciales disponibles:')
         },
         {
             tags: ['precio', 'precios', 'valor', 'cuanto cuesta', 'costo'],
@@ -54,10 +91,6 @@
                 const max = Math.max(...precios).toLocaleString('es-CL');
                 return `Nuestras propiedades van desde **UF ${min}** hasta **UF ${max}**, seg\u00fan tipo y ubicaci\u00f3n.\n\nRevisa el listado completo en la secci\u00f3n de Propiedades o preg\u00fantame por una comuna espec\u00edfica.`;
             }
-        },
-        {
-            tags: ['uf', 'dolar', 'indicador', 'indicadores'],
-            responder: () => `Los valores de hoy son:\n\n**UF:** ${getUF()}\n**D\u00f3lar:** ${getDolar()}\n\nEstos datos se actualizan autom\u00e1ticamente desde el Diario Financiero.`
         },
         {
             tags: ['servicio', 'servicios', 'remodelacion', 'tasacion', 'corretaje', 'legal', 'asesoria'],
@@ -86,19 +119,47 @@
         {
             tags: ['subsidio', 'subsidios'],
             responder: () => `Existen subsidios habitacionales seg\u00fan tu perfil (primera vivienda, clase media, etc.). Un asesor puede revisar contigo si calificas \u2014 cont\u00e1ctanos por **WhatsApp** para m\u00e1s detalles.`
+        },
+        {
+            tags: ['por que elegir', 'porque elegirnos', 'quienes son', 'quienes somos', 'por que plm', 'confianza'],
+            responder: () => `En PLM Gesti\u00f3n creemos en:\n\n\u2022 **Tu historia es lo primero** \u2014 escuchamos tus objetivos y construimos confianza.\n\u2022 **Entendemos tu prioridad** \u2014 dise\u00f1amos la estrategia ideal para tu tiempo y patrimonio.\n\u2022 **Gesti\u00f3n sin preocupaciones** \u2014 nos encargamos de lo legal, comercial y de marketing.\n\nM\u00e1s detalles en la secci\u00f3n **\u00bfPor qu\u00e9 PLM Gesti\u00f3n?**.`
+        },
+        {
+            tags: ['ubicacion', 'direccion', 'donde estan', 'donde quedan', 'oficina ubicada'],
+            responder: () => `Estamos ubicados en **Providencia, Santiago, Chile**. Puedes escribirnos por WhatsApp o correo para coordinar una reuni\u00f3n.`
         }
     ];
+
+    const comunasAliases = [
+        { comuna: 'Algarrobo', tags: ['algarrobo'] },
+        { comuna: 'Macul', tags: ['macul'] },
+        { comuna: 'Calera de Tango', tags: ['calera de tango', 'calera'] },
+        { comuna: 'Providencia', tags: ['providencia', 'barrio el golf', 'el golf'] },
+        { comuna: 'San Miguel', tags: ['san miguel'] },
+        { comuna: 'Santiago Centro', tags: ['santiago centro', 'centro historico'] }
+    ];
+    comunasAliases.forEach(({ comuna, tags }) => {
+        KB.push({
+            priority: 1,
+            tags,
+            responder: () => listarPropiedades(propiedadesDB.filter(p => p.comuna === comuna), `En **${comuna}** tenemos:`)
+        });
+    });
 
     function getBotResponse(input) {
         const clean = input.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
         let best = null;
         let bestScore = 0;
+        let bestPriority = -1;
         for (const entry of KB) {
+            const priority = entry.priority || 0;
             for (const tag of entry.tags) {
                 const tagClean = tag.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
                 if (clean.includes(tagClean)) {
                     const score = tagClean.length;
-                    if (score > bestScore) { bestScore = score; best = entry; }
+                    if (priority > bestPriority || (priority === bestPriority && score > bestScore)) {
+                        bestPriority = priority; bestScore = score; best = entry;
+                    }
                 }
             }
         }
