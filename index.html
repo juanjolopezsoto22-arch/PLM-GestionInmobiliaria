@@ -1,0 +1,461 @@
+<!DOCTYPE html>
+<html lang="es" data-theme="light">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PLM Gestión Inmobiliaria | Propiedades y Remodelaciones</title>
+    
+    <!-- Meta tags SEO -->
+    <meta name="description" content="Encuentra tu próximo hogar con PLM Gestión Inmobiliaria. Corretaje, tasaciones y remodelaciones de alto estándar en Santiago, Algarrobo y todo Chile.">
+    <meta name="keywords" content="PLM, corretaje, propiedades, remodelaciones, tasaciones, algarrobo, santiago, arriendo, venta">
+    <meta name="author" content="PLM Gestión Inmobiliaria">
+    
+    <!-- Open Graph (para compartir en redes sociales) -->
+    <meta property="og:title" content="PLM Gestión Inmobiliaria">
+    <meta property="og:description" content="Propiedades, remodelaciones y proyectos inmobiliarios de alta gama.">
+    <meta property="og:image" content="hdd.jpg">
+    <meta property="og:type" content="website">
+
+    <!-- CSS -->
+    <link rel="stylesheet" href="style.css">
+    
+    <!-- Fonts: Inter (Sans-serif moderna) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <!-- FontAwesome Iconos -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+
+<body id="inicio">
+    <!-- Top Bar (Indicadores y Contacto) -->
+    <div class="top-bar">
+        <div class="top-bar-left">
+            <a href="mailto:contacto@plm.cl" title="Enviar correo electrónico">
+                <i class="fa-solid fa-envelope"></i> <span>contacto@plm.cl</span>
+            </a>
+            <a href="https://wa.me/56995093892" target="_blank" rel="noopener" title="Contactar por WhatsApp">
+                <i class="fa-solid fa-phone"></i> <span>+56 9 9509 3892</span>
+            </a>
+        </div>
+        <div class="top-bar-right">
+            <div class="indicators">
+                <span class="indicator-tag"><strong>UF:</strong> <span id="uf-value" class="indicator-val">Cargando...</span></span>
+                <span class="indicator-tag"><strong>Dólar:</strong> <span id="dolar-value" class="indicator-val">Cargando...</span></span>
+            </div>
+            <a href="https://www.df.cl/indicadores" target="_blank" rel="noopener" class="source-link">(Diario Financiero)</a>
+        </div>
+    </div>
+
+    <!-- Script inicial para cargar indicadores en caché -->
+    <script>
+        // Cargar indicadores de localStorage rápido si existen
+        const cUf = localStorage.getItem('lastUf');
+        const cDol = localStorage.getItem('lastDol');
+        if (cUf) document.getElementById('uf-value').textContent = cUf;
+        if (cDol) document.getElementById('dolar-value').textContent = cDol;
+    </script>
+
+    <!-- Navbar -->
+    <nav class="navbar">
+        <div class="nav-container">
+            <a href="#inicio" class="logo" id="nav-logo">
+                <img src="hdd.jpg" alt="PLM Logo Principal" class="nav-logo-img">
+                <span class="logo-text">PLM <span class="logo-accent">Gestión</span></span>
+            </a>
+            
+            <div class="nav-actions">
+                <div class="nav-links" id="nav-links">
+                    <a href="#propiedades">Propiedades</a>
+                    <a href="#servicios">Servicios</a>
+                    <a href="#nosotros">Nosotros</a>
+                    <a href="#contacto" class="btn-nav">Contacto</a>
+                </div>
+
+
+                <!-- Menú Hamburguesa -->
+                <div class="menu-toggle" id="mobile-menu" aria-label="Abrir menú móvil" role="button" tabindex="0">
+                    <span class="bar"></span>
+                    <span class="bar"></span>
+                    <span class="bar"></span>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section (Carrusel) -->
+    <header class="hero">
+        <div class="hero-slider" id="hero-slider">
+            <!-- Las imágenes de fondo se insertarán dinámicamente con transiciones cross-fade -->
+        </div>
+        <div class="hero-overlay"></div>
+        <div class="hero-content">
+            <h1 class="hero-title">Sinergia de Propiedades y Proyectos</h1>
+            <p class="hero-desc">Compra, vende o arrienda tu propiedad con profesionales a tu altura. Renovaciones de interiores exclusivas y tasación experta.</p>
+            
+            <div class="hero-buttons">
+                <button id="btn-venta" class="btn-hero btn-hero-primary">
+                    <i class="fa-solid fa-search"></i> Ver Propiedades
+                </button>
+                <button id="btn-remodelar" class="btn-hero btn-hero-secondary">
+                    <i class="fa-solid fa-hammer"></i> Remodelaciones
+                </button>
+                <button id="btn-tasaciones" class="btn-hero btn-hero-secondary">
+                    <i class="fa-solid fa-chart-pie"></i> Tasaciones
+                </button>
+            </div>
+            
+            <div class="mensaje-container">
+                <p id="mensaje-hero" class="mensaje"></p>
+            </div>
+        </div>
+        
+        <!-- Indicadores de slide -->
+        <div class="hero-dots" id="hero-dots"></div>
+    </header>
+
+    <main>
+        <!-- Propiedades Destacadas -->
+        <section id="propiedades" class="properties-section">
+            <div class="container">
+                <h2 class="section-title">Propiedades Destacadas</h2>
+                <p class="section-subtitle">Explora nuestras exclusivas opciones en venta y arriendo en el mercado actual.</p>
+
+                <!-- Filtros de Propiedades -->
+                <div class="filters-card glass-panel">
+                    <div class="filters-selects">
+                        <div class="select-wrapper">
+                            <select id="filter-tipo" class="filter-select" aria-label="Filtrar por tipo de propiedad">
+                                <option value="todos">Todos los Tipos</option>
+                                <option value="departamento">Departamentos</option>
+                                <option value="casa">Casas</option>
+                                <option value="parcela">Parcelas</option>
+                                <option value="comercial">Comercial / Galpón</option>
+                            </select>
+                        </div>
+                        <div class="select-wrapper">
+                            <select id="filter-comuna" class="filter-select" aria-label="Filtrar por comuna">
+                                <option value="todas">Todas las Comunas</option>
+                                <option value="algarrobo">Algarrobo</option>
+                                <option value="calera de tango">Calera de Tango</option>
+                                <option value="macul">Macul</option>
+                                <option value="providencia">Providencia / El Golf</option>
+                                <option value="san miguel">San Miguel</option>
+                                <option value="santiago centro">Santiago Centro</option>
+                            </select>
+                        </div>
+                        <div class="select-wrapper">
+                            <select id="sort-precio" class="filter-select" aria-label="Ordenar por precio">
+                                <option value="default">Ordenar por Precio</option>
+                                <option value="asc">Menor a Mayor</option>
+                                <option value="desc">Mayor a Menor</option>
+                            </select>
+                        </div>
+                        <button id="btn-borrar-filtros" class="btn-clear-filters" title="Limpiar todos los filtros">
+                            <i class="fa-solid fa-filter-circle-xmark"></i> Limpiar
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Grid de Propiedades -->
+                <div class="properties-grid" id="properties-container">
+                    <!-- Se insertan por script.js -->
+                    <div class="loading-spinner">
+                        <i class="fa-solid fa-circle-notch fa-spin"></i> Cargando propiedades...
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Servicios Generales -->
+        <section id="servicios" class="services-section">
+            <div class="container">
+                <h2 class="section-title">Servicios Integrales</h2>
+                <p class="section-subtitle">Ofrecemos soluciones personalizadas respaldadas por experiencia comercial y técnica.</p>
+                
+                <div class="services-grid">
+                    <div class="service-card glass-panel" data-service="Corretaje de Propiedades" tabindex="0">
+                        <div class="service-icon-wrapper">
+                            <i class="fa-solid fa-house-chimney-user"></i>
+                        </div>
+                        <h3>Corretaje de Propiedades</h3>
+                        <p>Gestión completa para vender o arrendar tu propiedad al mejor precio de mercado. Te acompañamos en todo el proceso comercial y documental.</p>
+                        <div class="service-action">
+                            <span>Consultar servicio</span> <i class="fa-solid fa-arrow-right"></i>
+                        </div>
+                    </div>
+                    
+                    <div class="service-card glass-panel" data-service="Tasación Inmobiliaria" tabindex="0">
+                        <div class="service-icon-wrapper">
+                            <i class="fa-solid fa-chart-line"></i>
+                        </div>
+                        <h3>Tasación Inmobiliaria</h3>
+                        <p>Valoramos tu propiedad profesionalmente con precisión de mercado real actual, asegurando un precio justo y competitivo para tu transacción.</p>
+                        <div class="service-action">
+                            <span>Consultar servicio</span> <i class="fa-solid fa-arrow-right"></i>
+                        </div>
+                    </div>
+                    
+                    <div class="service-card glass-panel" data-service="Asesoría Comercial y Legal" tabindex="0">
+                        <div class="service-icon-wrapper">
+                            <i class="fa-solid fa-scale-balanced"></i>
+                        </div>
+                        <h3>Asesoría Comercial y Legal</h3>
+                        <p>Acompañamiento comercial y legal en todo el proceso de compra, venta o arriendo. Solucionamos tus dudas legales y revisamos promesas de compraventa.</p>
+                        <div class="service-action">
+                            <span>Consultar servicio</span> <i class="fa-solid fa-arrow-right"></i>
+                        </div>
+                    </div>
+                    
+                    <div class="service-card glass-panel" data-service="Remodelaciones y Proyectos" tabindex="0">
+                        <div class="service-icon-wrapper">
+                            <i class="fa-solid fa-trowel-bricks"></i>
+                        </div>
+                        <h3>Remodelaciones y Proyectos</h3>
+                        <p>Renovamos cocinas, baños, aplicamos cambios de pisos, revestimientos e instalaciones. Contamos con especialistas en detalles finos para maximizar la plusvalía.</p>
+                        <div class="service-action">
+                            <span>Consultar servicio</span> <i class="fa-solid fa-arrow-right"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Por qué Nosotros -->
+        <section id="nosotros" class="why-us-section">
+            <div class="container">
+                <h2 class="section-title">¿Por qué PLM Gestión?</h2>
+                <p class="section-subtitle">Conocemos el mercado y nos adaptamos a tus necesidades con cercanía y transparencia.</p>
+                
+                <div class="why-grid">
+                    <div class="why-card glass-panel">
+                        <div class="why-icon-box">
+                            <i class="fa-solid fa-comments-dollar"></i>
+                        </div>
+                        <h3>Tu Historia es lo Primero</h3>
+                        <p>Escuchamos tu historia y objetivos. Construimos un ambiente de confianza y colaboración constante para lograr resultados ágiles que superen tus expectativas.</p>
+                    </div>
+                    
+                    <div class="why-card glass-panel">
+                        <div class="why-icon-box">
+                            <i class="fa-solid fa-bullseye"></i>
+                        </div>
+                        <h3>Entendemos tu Prioridad</h3>
+                        <p>Sabemos lo valioso que es tu tiempo y patrimonio. Ya sea una venta rápida o la búsqueda de tu propiedad soñada, diseñamos la estrategia inmobiliaria ideal para ti.</p>
+                    </div>
+                    
+                    <div class="why-card glass-panel">
+                        <div class="why-icon-box">
+                            <i class="fa-solid fa-user-shield"></i>
+                        </div>
+                        <h3>Gestión sin Preocupaciones</h3>
+                        <p>Nos encargamos del ciclo completo: legal, comercial, marketing y coordinación. Relájate mientras nuestro equipo de profesionales gestiona cada fase del proyecto.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- ===== FORMULARIO DE CONSULTAS ===== -->
+    <section id="formulario-contacto" class="contact-form-section">
+        <div class="container">
+            <div class="contact-form-wrapper">
+                <div class="contact-form-info">
+                    <span class="contact-form-label">Escríbenos</span>
+                    <h2 class="contact-form-title">¿En qué podemos<br><span class="gradient-text">ayudarte?</span></h2>
+                    <p class="contact-form-desc">Completa el formulario y nuestro equipo te contactará a la brevedad. Estamos aquí para orientarte en cada paso de tu proyecto inmobiliario.</p>
+                    <ul class="contact-features">
+                        <li><i class="fa-solid fa-circle-check"></i> Respuesta en menos de 24 horas</li>
+                        <li><i class="fa-solid fa-circle-check"></i> Asesoría 100% personalizada</li>
+                        <li><i class="fa-solid fa-circle-check"></i> Sin compromisos</li>
+                    </ul>
+                </div>
+
+                <div class="contact-form-card glass-panel">
+                    <form id="consulta-form" novalidate>
+                        <div class="form-group">
+                            <label for="form-nombre" class="form-label">
+                                <i class="fa-solid fa-user"></i> Nombre completo
+                            </label>
+                            <input
+                                type="text"
+                                id="form-nombre"
+                                name="nombre"
+                                class="form-input"
+                                placeholder="Ej: Juan Pérez"
+                                required
+                                autocomplete="name"
+                            >
+                            <span class="form-error" id="error-nombre"></span>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="form-email" class="form-label">
+                                <i class="fa-solid fa-envelope"></i> Correo electrónico
+                            </label>
+                            <input
+                                type="email"
+                                id="form-email"
+                                name="email"
+                                class="form-input"
+                                placeholder="Ej: juan@correo.com"
+                                required
+                                autocomplete="email"
+                            >
+                            <span class="form-error" id="error-email"></span>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="form-motivo" class="form-label">
+                                <i class="fa-solid fa-comment-dots"></i> Motivo de consulta
+                            </label>
+                            <textarea
+                                id="form-motivo"
+                                name="motivo"
+                                class="form-input form-textarea"
+                                placeholder="Cuéntanos en qué podemos ayudarte..."
+                                rows="5"
+                                required
+                            ></textarea>
+                            <span class="form-error" id="error-motivo"></span>
+                        </div>
+
+                        <button type="submit" class="btn-form-submit" id="btn-form-submit">
+                            <span class="btn-text"><i class="fa-solid fa-paper-plane"></i> Enviar consulta</span>
+                            <span class="btn-loading" style="display:none;"><i class="fa-solid fa-circle-notch fa-spin"></i> Enviando...</span>
+                        </button>
+
+                        <div id="form-success" class="form-success-msg" style="display:none;">
+                            <i class="fa-solid fa-circle-check"></i>
+                            <div>
+                                <strong>¡Mensaje enviado!</strong>
+                                <p>Nos pondremos en contacto contigo pronto.</p>
+                            </div>
+                        </div>
+                        <div id="form-server-error" class="form-server-error" style="display:none;">
+                            <i class="fa-solid fa-triangle-exclamation"></i>
+                            <span>Ocurrió un error al enviar. Por favor intenta de nuevo.</span>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer / Contacto -->
+    <footer id="contacto">
+        <div class="footer-container container">
+            <div class="footer-grid">
+                <div class="footer-info">
+                    <div class="footer-brand">
+                        <img src="bajoo.jpg" alt="PLM Logo Secundario" class="footer-logo-img">
+                        <h3>PLM Gestión Inmobiliaria</h3>
+                    </div>
+                    <p class="footer-desc">Compromiso, vanguardia y profesionalismo en cada etapa de tu camino inmobiliario. Tu confianza es nuestro motor de crecimiento.</p>
+                    
+                    <div class="footer-social-links">
+                        <a href="https://www.instagram.com/plmpropiedades/" target="_blank" rel="noopener" class="social-btn instagram-btn" title="Síguenos en Instagram">
+                            <i class="fa-brands fa-instagram"></i> Instagram
+                        </a>
+                    </div>
+                </div>
+                
+                <div class="footer-contact">
+                    <h4>Contacto Directo</h4>
+                    <ul class="contact-list">
+                        <li>
+                            <a href="https://wa.me/56995093892" target="_blank" rel="noopener">
+                                <i class="fa-solid fa-phone"></i> +56 9 9509 3892
+                            </a>
+                        </li>
+                        <li>
+                            <a href="mailto:contacto@plm.cl">
+                                <i class="fa-solid fa-envelope"></i> contacto@plm.cl
+                            </a>
+                        </li>
+                        <li>
+                            <span>
+                                <i class="fa-solid fa-location-dot"></i> Providencia, Santiago, Chile
+                            </span>
+                        </li>
+                    </ul>
+                </div>
+
+                <div class="footer-action">
+                    <h4>¿Tienes Consultas?</h4>
+                    <p>Haz clic para iniciar una conversación directa por WhatsApp. Estaremos encantados de asesorarte.</p>
+                    <button id="btn-whatsapp" class="btn-whatsapp-footer">
+                        <i class="fa-brands fa-whatsapp"></i> Conversar Ahora
+                    </button>
+                </div>
+            </div>
+            
+            <div class="footer-bottom">
+                <p>&copy; 2026 PLM Gestión Inmobiliaria. Todos los derechos reservados. | Diseñado por <a href="https://linkedin.com/in/juan-josé-lópez-7b2723324" target="_blank" rel="noopener" class="author-link">JLS Producción</a></p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Botón de WhatsApp Flotante con efecto Tooltip -->
+    <a href="https://api.whatsapp.com/send?phone=+56995093892&text=Hola%20PLM%20Gesti%C3%B3n%20Inmobiliaria%2C%20estoy%20navegando%20por%20su%20web%20y%20me%20gustar%C3%ADa%20obtener%20m%C3%A1s%20informaci%C3%B3n."
+        target="_blank" rel="noopener" class="wsp-float" aria-label="Contactar por WhatsApp">
+        <i class="fa-brands fa-whatsapp animate-bounce"></i>
+        <span class="wsp-tooltip">¿En qué te ayudamos?</span>
+    </a>
+
+    <!-- Modal de Detalles de Propiedad -->
+    <div id="property-modal" class="modal-overlay" aria-hidden="true" role="dialog">
+        <div class="modal-wrapper">
+            <button id="modal-close" class="modal-close-btn" aria-label="Cerrar ventana emergente">&times;</button>
+            <div class="modal-body glass-panel" id="modal-body-content">
+                <!-- Se inyecta dinámicamente con JS -->
+            </div>
+        </div>
+    </div>
+
+    <!-- JS Principal -->
+    <script src="script.js"></script>
+
+    <!-- Agente IA Flotante PLM -->
+    <script src="agent.js" defer></script>
+
+    <!-- Supabase Client -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+    <!-- Formulario de Consultas → Correo -->
+    <script>
+        (function () {
+            const form = document.getElementById('consulta-form');
+            const btnSubmit = document.getElementById('btn-form-submit');
+            const btnText = btnSubmit.querySelector('.btn-text');
+            const btnLoading = btnSubmit.querySelector('.btn-loading');
+            const successMsg = document.getElementById('form-success');
+            const serverError = document.getElementById('form-server-error');
+
+            form.addEventListener('submit', (e) => {
+                e.preventDefault();
+
+                const nombre = document.getElementById('form-nombre').value.trim();
+                const email = document.getElementById('form-email').value.trim();
+                const motivo = document.getElementById('form-motivo').value.trim();
+
+                if (nombre.length < 2 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) || motivo.length < 10) {
+                    return; // Validation handled by input events
+                }
+
+                // Redirect to mailto link
+                const subject = encodeURIComponent('Nueva Consulta de ' + nombre);
+                const body = encodeURIComponent('Nombre: ' + nombre + '\nCorreo: ' + email + '\n\nConsulta:\n' + motivo);
+                window.location.href = 'mailto:contacto@plm.cl?subject=' + subject + '&body=' + body;
+
+                successMsg.style.display = 'flex';
+                setTimeout(() => { successMsg.style.display = 'none'; }, 6000);
+                form.reset();
+            });
+        })();
+    </script>
+</body>
+
+</html>
