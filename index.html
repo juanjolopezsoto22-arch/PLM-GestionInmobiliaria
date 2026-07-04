@@ -427,6 +427,9 @@
     <!-- Formulario de Consultas → Correo -->
     <script>
         (function () {
+            // Access key gratuita de https://web3forms.com asociada a contacto@plm.cl
+            const WEB3FORMS_ACCESS_KEY = 'ef551245-a1ce-4ee7-a488-5de9b42da985';
+
             const form = document.getElementById('consulta-form');
             const btnSubmit = document.getElementById('btn-form-submit');
             const btnText = btnSubmit.querySelector('.btn-text');
@@ -434,7 +437,7 @@
             const successMsg = document.getElementById('form-success');
             const serverError = document.getElementById('form-server-error');
 
-            form.addEventListener('submit', (e) => {
+            form.addEventListener('submit', async (e) => {
                 e.preventDefault();
 
                 const nombre = document.getElementById('form-nombre').value.trim();
@@ -445,14 +448,42 @@
                     return; // Validation handled by input events
                 }
 
-                // Redirect to mailto link
-                const subject = encodeURIComponent('Nueva Consulta de ' + nombre);
-                const body = encodeURIComponent('Nombre: ' + nombre + '\nCorreo: ' + email + '\n\nConsulta:\n' + motivo);
-                window.location.href = 'mailto:contacto@plm.cl?subject=' + subject + '&body=' + body;
+                serverError.style.display = 'none';
+                successMsg.style.display = 'none';
+                btnText.style.display = 'none';
+                btnLoading.style.display = 'inline-flex';
+                btnSubmit.disabled = true;
 
-                successMsg.style.display = 'flex';
-                setTimeout(() => { successMsg.style.display = 'none'; }, 6000);
-                form.reset();
+                try {
+                    const response = await fetch('https://api.web3forms.com/submit', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+                        body: JSON.stringify({
+                            access_key: WEB3FORMS_ACCESS_KEY,
+                            subject: 'Nueva Consulta de ' + nombre,
+                            name: nombre,
+                            email: email,
+                            message: motivo
+                        })
+                    });
+                    const result = await response.json();
+
+                    if (response.ok && result.success) {
+                        successMsg.style.display = 'flex';
+                        form.reset();
+                        setTimeout(() => { successMsg.style.display = 'none'; }, 6000);
+                    } else {
+                        throw new Error(result.message || 'Error al enviar');
+                    }
+                } catch (error) {
+                    console.error('Error al enviar consulta:', error);
+                    serverError.style.display = 'flex';
+                    setTimeout(() => { serverError.style.display = 'none'; }, 6000);
+                } finally {
+                    btnText.style.display = 'inline-flex';
+                    btnLoading.style.display = 'none';
+                    btnSubmit.disabled = false;
+                }
             });
         })();
     </script>
