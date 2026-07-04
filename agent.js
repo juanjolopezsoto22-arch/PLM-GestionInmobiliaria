@@ -56,6 +56,10 @@
             responder: () => `\u00a1Muy bien, gracias! \ud83d\ude0a Dispuesto a ayudarte en lo que necesites sobre PLM Gesti\u00f3n Inmobiliaria.`
         },
         {
+            tags: ['como te llamas', 'cual es tu nombre', 'quien eres', 'tu nombre'],
+            responder: () => `Me llamo **${AGENT_NAME}** \ud83e\udd16, el asistente virtual de PLM Gesti\u00f3n Inmobiliaria. Estoy aqu\u00ed para ayudarte con propiedades, precios, servicios y todo lo que necesites saber sobre la p\u00e1gina.`
+        },
+        {
             tags: ['precio del dolar', 'precio del uf', 'valor del dolar', 'valor del uf', 'precio dolar', 'precio uf', 'valor dolar', 'valor uf', 'cuanto esta el dolar', 'cuanto esta el uf', 'cuanto vale el dolar', 'cuanto vale el uf', 'uf', 'dolar', 'indicador', 'indicadores'],
             responder: () => `Los valores de hoy son:\n\n**UF:** ${getUF()}\n**D\u00f3lar:** ${getDolar()}\n\nEstos datos se actualizan autom\u00e1ticamente desde el Diario Financiero.`
         },
