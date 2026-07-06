@@ -1,0 +1,473 @@
+{
+  "name": "Confirmacion de Reuniones",
+  "nodes": [
+    {
+      "parameters": {
+        "pollTimes": {
+          "item": [
+            {
+              "mode": "everyHour"
+            }
+          ]
+        },
+        "filters": {},
+        "options": {}
+      },
+      "type": "n8n-nodes-base.microsoftOutlookTrigger",
+      "typeVersion": 1,
+      "position": [
+        -336,
+        0
+      ],
+      "id": "dbeaaa2f-a89a-4b91-b696-0c084a2f9c44",
+      "name": "Microsoft Outlook Trigger",
+      "credentials": {
+        "microsoftOutlookOAuth2Api": {
+          "id": "Lb96DPxkbrrHI8et",
+          "name": "Microsoft Outlook OAuth2 API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "bd243221-e4d0-4579-82c6-751ea2aa3013",
+              "leftValue": "={{ $json.from }}",
+              "rightValue": "plmpropiedades@outlook.com",
+              "operator": {
+                "type": "string",
+                "operation": "notEquals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        -128,
+        0
+      ],
+      "id": "adc3f702-3834-4542-8353-f6e468127db4",
+      "name": "If",
+      "retryOnFail": false
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1kpiLlyadZHrGZoY8wqNpSa2WbcyZvxE2NoUvk-kcUWg",
+          "mode": "list",
+          "cachedResultName": "PLM",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1kpiLlyadZHrGZoY8wqNpSa2WbcyZvxE2NoUvk-kcUWg/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "LEADS",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1kpiLlyadZHrGZoY8wqNpSa2WbcyZvxE2NoUvk-kcUWg/edit#gid=0"
+        },
+        "filtersUI": {
+          "values": [
+            {
+              "lookupColumn": "Email",
+              "lookupValue": "={{$json.from}}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        160,
+        -96
+      ],
+      "id": "b2873b41-219e-4409-ba10-50bd7fcfb2c2",
+      "name": "Get row(s) in sheet",
+      "alwaysOutputData": true,
+      "retryOnFail": true,
+      "waitBetweenTries": 1500,
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "3aPuOVe7gkPdLzUc",
+          "name": "Google Sheets OAuth2 API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Eres un asistente experto en interpretar respuestas de clientes sobre horarios de reunión.\n\nAnaliza el correo del cliente y determina cuál opción de horario eligió, si eligió alguna.\n\nLas opciones que se le ofrecieron a este cliente son (hora de Chile):\n\nOpción 1: {{ DateTime.fromISO($node['Get row(s) in sheet'].json.opcion_1).setZone('America/Santiago').toFormat(\"cccc dd 'de' LLLL 'a las' HH:mm 'hrs'\") }}\nOpción 2: {{ DateTime.fromISO($node['Get row(s) in sheet'].json.opcion_2).setZone('America/Santiago').toFormat(\"cccc dd 'de' LLLL 'a las' HH:mm 'hrs'\") }}\nOpción 3: {{ DateTime.fromISO($node['Get row(s) in sheet'].json.opcion_3).setZone('America/Santiago').toFormat(\"cccc dd 'de' LLLL 'a las' HH:mm 'hrs'\") }}\n\nREGLA CRÍTICA: Nunca inventes una fecha u hora nueva. Tu única tarea es identificar cuál de las 3 opciones existentes eligió el cliente — nunca una cuarta opción, nunca un horario distinto a los de la lista.\n\nSi el cliente hace alusión directa a un número (\"la opción 2\", \"la 3\", \"me sirve la primera\"), identificá ese número.\nSi el cliente menciona un día/hora en texto libre, comparálo contra las 3 opciones y elegí la que coincide. Si no coincide claramente con ninguna, no elijas ninguna.\n\nDevolvé el resultado según el formato solicitado. No escribas nada fuera de ese formato.\n\nCorreo:\nAsunto: {{ $('Microsoft Outlook Trigger').item.json.subject }}\nMensaje: {{ $('Microsoft Outlook Trigger').item.json.bodyPreview }}",
+        "hasOutputParser": true,
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        368,
+        -96
+      ],
+      "id": "c3a0b15a-cac5-4b96-8ab2-942204af1a76",
+      "name": "AI Agent",
+      "retryOnFail": true,
+      "waitBetweenTries": 2000
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "gpt-4o-mini",
+          "mode": "list",
+          "cachedResultName": "gpt-4o-mini"
+        },
+        "builtInTools": {},
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.3,
+      "position": [
+        368,
+        80
+      ],
+      "id": "218bf5bf-6826-4bd0-b31d-1340b456ec29",
+      "name": "OpenAI Chat Model",
+      "credentials": {
+        "openAiApi": {
+          "id": null,
+          "name": "",
+          "__aiGatewayManaged": true
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "leftValue": "={{ $json.agenda }}",
+              "operator": {
+                "operation": "true",
+                "type": "boolean"
+              },
+              "rightValue": "",
+              "id": "afb31d39-4160-4b43-bf3b-faa9e9e7e5a6"
+            }
+          ],
+          "combinator": "and"
+        },
+        "looseTypeValidation": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        976,
+        -96
+      ],
+      "id": "cce5fc34-49f9-490d-8d06-59493022ebed",
+      "name": "If1"
+    },
+    {
+      "parameters": {
+        "resource": "event",
+        "operation": "create",
+        "calendarId": {
+          "__rl": true,
+          "value": "AQMkADAwATNiZmYAZS1iNDk3LTIzZGQALTAwAi0wMAoARgAAA_18G8ihX_tCtU0gww5_TS0HAG3VoR98vIFPj1LEUTwbnpQAAAIBBgAAAG3VoR98vIFPj1LEUTwbnpQAAAINMAAAAA==",
+          "mode": "list",
+          "cachedResultName": "Calendar"
+        },
+        "subject": "=Reunión PLM - {{ $('Get row(s) in sheet').item.json.Nombre }}",
+        "startDateTime": "={{ $json.start }}",
+        "endDateTime": "={{ $json.end }}",
+        "additionalFields": {
+          "attendees": {
+            "values": [
+              {
+                "email": "={{ $('Get row(s) in sheet').item.json.Email }}",
+                "name": "={{ $('Get row(s) in sheet').item.json.Nombre }}"
+              }
+            ]
+          },
+          "body": "=Reunión comercial PLM Propiedades.\n\nOperación:\n{{ $('Get row(s) in sheet').item.json.Operacion }}\n\nTipo:\n{{ $('Get row(s) in sheet').item.json.Tipo_Propiedad }}\n\nComuna:\n{{ $('Get row(s) in sheet').item.json.Comuna }}"
+        }
+      },
+      "type": "n8n-nodes-base.microsoftOutlook",
+      "typeVersion": 2,
+      "position": [
+        1264,
+        -112
+      ],
+      "id": "a0a356d8-ff29-421b-884b-6218967ff449",
+      "name": "Create an event",
+      "webhookId": "249f78cd-2edc-4459-8e6e-f3b98db5cfcb",
+      "retryOnFail": true,
+      "waitBetweenTries": 2000,
+      "credentials": {
+        "microsoftOutlookOAuth2Api": {
+          "id": "Lb96DPxkbrrHI8et",
+          "name": "Microsoft Outlook OAuth2 API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const data = $input.all()[0]?.json;\nif (!data) throw new Error('No se recibieron datos del AI Agent.');\n\nconst opcionElegida = data.output?.opcion_elegida ?? data.opcion_elegida;\nif (![1, 2, 3].includes(opcionElegida)) {\n  return [{ json: { ...data, agenda: false } }];\n}\n\nconst isoElegido = $('Get row(s) in sheet').item.json['opcion_' + opcionElegida];\nif (!isoElegido) {\n  throw new Error('opcion_' + opcionElegida + ' no tiene un valor guardado en la Sheet.');\n}\n\nconst start = new Date(isoElegido);\nif (isNaN(start.getTime())) {\n  throw new Error('ISO invalido en opcion_' + opcionElegida + ': ' + isoElegido);\n}\n\nconst duracionMin = 60;\nconst end = new Date(start.getTime() + duracionMin * 60000);\n\nreturn [{ json: { ...data, agenda: true, start: start.toISOString(), end: end.toISOString() } }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        720,
+        -96
+      ],
+      "id": "e76eb3c2-1cc3-4c41-9ebd-eefdf2996bd2",
+      "name": "Preparar Fecha Reunión"
+    },
+    {
+      "parameters": {
+        "schemaType": "manual",
+        "inputSchema": "{\n  \"type\": \"object\",\n  \"properties\": {\n    \"opcion_elegida\": {\n      \"type\": [\"integer\", \"null\"],\n      \"enum\": [1, 2, 3, null],\n      \"description\": \"Número de la opción elegida por el cliente (1, 2 o 3), o null si no eligió ninguna con claridad.\"\n    },\n    \"comentario\": {\n      \"type\": \"string\",\n      \"description\": \"Breve explicación de la elección o de por qué no se pudo determinar.\"\n    }\n  },\n  \"required\": [\"opcion_elegida\", \"comentario\"]\n}"
+      },
+      "id": "94827974-f971-4b78-a56f-b0c6c2174406",
+      "name": "Structured Output Parser",
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.3,
+      "position": [
+        528,
+        160
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const fecha = new Date($('Preparar Fecha Reunión').item.json.start);\n\nconst fechaTexto = fecha.toLocaleString('es-CL', {\n  weekday: 'long', day: '2-digit', month: 'long',\n  hour: '2-digit', minute: '2-digit', timeZone: 'America/Santiago'\n});\n\nconst nombre = $('Get row(s) in sheet').item.json.Nombre || '';\nconst saludo = nombre ? `Hola ${nombre}` : 'Hola';\n\nconst operacion = ($('Get row(s) in sheet').item.json.Operacion || 'tu solicitud').toLowerCase();\nconst comuna = $('Get row(s) in sheet').item.json.Comuna || '';\nconst comunaTexto = comuna ? ` en ${comuna}` : '';\n\nconst cuerpo = `${saludo},<br><br>` +\n  `¡Buenas noticias! Confirmamos tu reunión para el <strong>${fechaTexto}</strong><br><br>` +\n  `Quedamos coordinados para conversar sobre tu operación de ${operacion}${comunaTexto}. Si necesitas reprogramar o tienes alguna consulta antes de la reunión, escríbenos y con gusto te ayudamos.<br><br>` +\n  `¡Nos vemos pronto!<br><br>` +\n  `Saludos cordiales,<br>Equipo PLM Propiedades`;\n\nreturn [{\n  json: {\n    email: $('Get row(s) in sheet').item.json.Email,\n    cuerpo_confirmacion: cuerpo,\n    fecha_texto: fechaTexto\n  }\n}];"
+      },
+      "id": "210729be-2b94-4956-a6ed-fc0fd8551f5c",
+      "name": "Formatear Confirmación",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1552,
+        -112
+      ]
+    },
+    {
+      "parameters": {
+        "toRecipients": "={{ $json.email }}",
+        "subject": "Confirmación de tu reunión - PLM Propiedades",
+        "bodyContent": "={{ $json.cuerpo_confirmacion }}",
+        "additionalFields": {
+          "bodyContentType": "html"
+        }
+      },
+      "id": "e6ce7f81-e92a-4a56-a4b5-2b3a7e76f03b",
+      "name": "Enviar Confirmacion Agenda",
+      "type": "n8n-nodes-base.microsoftOutlook",
+      "typeVersion": 2,
+      "position": [
+        1824,
+        -112
+      ],
+      "webhookId": "84fe4ae2-b45b-455b-8c1f-6c1d0d208277",
+      "retryOnFail": true,
+      "waitBetweenTries": 2000,
+      "credentials": {
+        "microsoftOutlookOAuth2Api": {
+          "id": "Lb96DPxkbrrHI8et",
+          "name": "Microsoft Outlook OAuth2 API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "toRecipients": "plmpropiedades@outlook.com",
+        "subject": "¡Necesitamos tu ayuda! - agendar manualmente ",
+        "bodyContent": "=El cliente {{ $('Get row(s) in sheet').item.json.Email }} respondió al correo de horarios, pero no coincide con ninguna de las 3 opciones ofrecidas.\n\nMensaje del cliente: {{ $('Microsoft Outlook Trigger').item.json.bodyPreview }}\n\nPor favor coordinar la reunión manualmente con este cliente.",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.microsoftOutlook",
+      "typeVersion": 2,
+      "position": [
+        1264,
+        128
+      ],
+      "id": "a83dcec1-929e-4908-9408-43250ccad76b",
+      "name": "Human in the Loop",
+      "webhookId": "e2afe40d-3f83-4035-9403-1cbc50dce418",
+      "retryOnFail": true,
+      "waitBetweenTries": 1500,
+      "credentials": {
+        "microsoftOutlookOAuth2Api": {
+          "id": "Lb96DPxkbrrHI8et",
+          "name": "Microsoft Outlook OAuth2 API"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Microsoft Outlook Trigger": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "Get row(s) in sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get row(s) in sheet": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Preparar Fecha Reunión",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If1": {
+      "main": [
+        [
+          {
+            "node": "Create an event",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Human in the Loop",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Preparar Fecha Reunión": {
+      "main": [
+        [
+          {
+            "node": "If1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Structured Output Parser": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create an event": {
+      "main": [
+        [
+          {
+            "node": "Formatear Confirmación",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Formatear Confirmación": {
+      "main": [
+        [
+          {
+            "node": "Enviar Confirmacion Agenda",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Enviar Confirmacion Agenda": {
+      "main": [
+        []
+      ]
+    },
+    "Human in the Loop": {
+      "main": [
+        []
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": true,
+    "timeSavedMode": "fixed",
+    "errorWorkflow": "qUCrL8nlG0qN494i",
+    "callerPolicy": "workflowsFromSameOwner"
+  },
+  "versionId": "a522fd38-212a-49ec-a230-4fca0cb7ff24",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "aiBuilderAssisted": true,
+    "builderVariant": "mcp",
+    "instanceId": "4e85cd5b3862d24f82ee8a3d7106ac7eedfb716a876ffa1b49fcd28423a03157"
+  },
+  "nodeGroups": [],
+  "id": "MWNfipQkuCVyxMRU",
+  "tags": []
+}

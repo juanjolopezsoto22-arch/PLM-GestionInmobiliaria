@@ -1,0 +1,67 @@
+{
+  "name": "Error Handler - PLM Propiedades",
+  "nodes": [
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.errorTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ],
+      "id": "b9448c38-f19c-42d9-be0b-842a7af1260f",
+      "name": "Error Trigger"
+    },
+    {
+      "parameters": {
+        "toRecipients": "plmpropiedades@outlook.com",
+        "subject": "=Error en workflow: {{ $json.execution.id }} del workflow \"{{ $json.execution.error.message }}\"",
+        "bodyContent": "=Falló la ejecución {{ $json.execution.id }} del workflow \"{{ $json.workflow.name }}\".\n\nÚltimo nodo ejecutado: {{ $json.execution.lastNodeExecuted }}\nError: {{ $json.execution.error.message }}\n\nVer ejecución: {{ $json.execution.url }}",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.microsoftOutlook",
+      "typeVersion": 2,
+      "position": [
+        208,
+        0
+      ],
+      "id": "cd0d68dc-34c9-4090-8a8c-345478ec0b95",
+      "name": "Send a message",
+      "webhookId": "c1b7af25-3991-458d-8ade-f2a2bae4fc6b",
+      "credentials": {
+        "microsoftOutlookOAuth2Api": {
+          "id": "Lb96DPxkbrrHI8et",
+          "name": "Microsoft Outlook OAuth2 API"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Error Trigger": {
+      "main": [
+        [
+          {
+            "node": "Send a message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": true
+  },
+  "versionId": "7f293865-6754-425e-ab7c-7a27b86e16e3",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "4e85cd5b3862d24f82ee8a3d7106ac7eedfb716a876ffa1b49fcd28423a03157"
+  },
+  "nodeGroups": [],
+  "id": "qUCrL8nlG0qN494i",
+  "tags": []
+}

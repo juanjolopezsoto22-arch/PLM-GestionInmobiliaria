@@ -1,0 +1,1182 @@
+{
+  "name": "PLM Propiedades - Triage de Leads por Correo",
+  "nodes": [
+    {
+      "parameters": {
+        "pollTimes": {
+          "item": [
+            {
+              "mode": "everyX",
+              "value": 5,
+              "unit": "minutes"
+            }
+          ]
+        },
+        "filters": {
+          "readStatus": "unread"
+        },
+        "options": {}
+      },
+      "id": "62b7c9b1-5081-4377-afc1-0474a29477fc",
+      "name": "Outlook Trigger - Correo Nuevo",
+      "type": "n8n-nodes-base.microsoftOutlookTrigger",
+      "typeVersion": 1,
+      "position": [
+        -224,
+        0
+      ],
+      "credentials": {
+        "microsoftOutlookOAuth2Api": {
+          "id": "Lb96DPxkbrrHI8et",
+          "name": "Microsoft Outlook OAuth2 API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "email",
+              "name": "email",
+              "value": "={{ $json.from?.emailAddress?.address ?? $json.from ?? \"\" }}",
+              "type": "string"
+            },
+            {
+              "id": "asunto",
+              "name": "asunto",
+              "value": "={{ $json.subject ?? \"\" }}",
+              "type": "string"
+            },
+            {
+              "id": "mensaje",
+              "name": "mensaje",
+              "value": "={{ $json.bodyPreview ?? $json.body?.content ?? \"\" }}",
+              "type": "string"
+            },
+            {
+              "id": "origen",
+              "name": "origen",
+              "value": "Outlook",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "118f1ee7-a728-45e3-aa13-1d02a9d9be5b",
+      "name": "Normalizar Datos",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        48,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Eres un asistente comercial de PLM Propiedades.\n\nAnaliza el correo y responde SOLO con JSON válido, sin texto adicional.\n\n{\n  \"es_lead\": true,\n  \"nombre\": \"\",\n  \"email\": \"\",\n  \"telefono\": \"\",\n  \"operacion\": \"\",\n  \"tipo_propiedad\": \"\",\n  \"comuna\": \"\",\n  \"presupuesto\": \"\",\n  \"prioridad\": \"\",\n  \"requiere_llamada\": true,\n  \"resumen\": \"\"\n}\n\nReglas:\n•⁠  ⁠es_lead: true si es un potencial cliente inmobiliario; false si es spam, publicidad o administrativo.\n•⁠  ⁠nombre: extrae el nombre si aparece.\n•⁠  ⁠email: usa el email del remitente.\n•⁠  ⁠operacion: Comprar, Vender, Arrendar o Consulta.\n•⁠  ⁠prioridad: Alta si deja teléfono o pide contacto rápido; Media si hay intención clara; Baja si es ambiguo.\n•⁠  ⁠requiere_llamada: true si deja teléfono o pide contacto.\n•⁠  ⁠resumen: máximo 30 palabras.\n\nCorreo:\nEmail remitente: {{$json.email}}\nAsunto: {{$json.asunto}}\nMensaje: {{$json.mensaje}}",
+        "hasOutputParser": true,
+        "options": {
+          "systemMessage": "Eres un asistente comercial de PLM Propiedades, una inmobiliaria. Analiza el correo y clasifícalo con estos criterios:\n- es_lead: true si es un potencial cliente inmobiliario; false si es spam, publicidad o administrativo.\n- operacion: Comprar, Vender, Arrendar o Consulta.\n- prioridad: Alta si deja teléfono o pide contacto rápido; Media si hay intención clara; Baja si es ambiguo.\n- requiere_llamada: true si deja teléfono o pide contacto.\n- resumen: máximo 30 palabras.\nDevuelve siempre el JSON estructurado solicitado, sin texto adicional."
+        }
+      },
+      "id": "c6a57070-8f58-4db0-a092-cf03c7eb10c7",
+      "name": "Clasificar Lead con IA",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        240,
+        0
+      ],
+      "retryOnFail": true,
+      "waitBetweenTries": 2000
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "gpt-4o-mini",
+          "mode": "list",
+          "cachedResultName": "gpt-4o-mini"
+        },
+        "builtInTools": {},
+        "options": {
+          "temperature": 0.1
+        }
+      },
+      "id": "d613aa24-6c1d-4ed9-b615-a9c610eff8b7",
+      "name": "OpenAI Chat Model",
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.3,
+      "position": [
+        128,
+        208
+      ],
+      "credentials": {
+        "openAiApi": {
+          "id": null,
+          "name": "",
+          "__aiGatewayManaged": true
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsonSchemaExample": "{\n  \"es_lead\": true,\n  \"nombre\": \"Juan Pérez\",\n  \"email\": \"juan@example.com\",\n  \"telefono\": \"+56912345678\",\n  \"operacion\": \"Comprar\",\n  \"tipo_propiedad\": \"Departamento\",\n  \"comuna\": \"Providencia\",\n  \"presupuesto\": \"150000000\",\n  \"prioridad\": \"Alta\",\n  \"requiere_llamada\": true,\n  \"resumen\": \"Cliente busca departamento en Providencia, presupuesto 150 millones, pide llamada.\"\n}",
+        "autoFix": true
+      },
+      "id": "725bbf31-8a08-45a2-86c0-f56d15b23c3f",
+      "name": "Validar Formato JSON del Lead",
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.3,
+      "position": [
+        336,
+        224
+      ]
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "gpt-5-mini",
+          "mode": "list",
+          "cachedResultName": "gpt-5-mini"
+        },
+        "builtInTools": {},
+        "options": {
+          "temperature": 0
+        }
+      },
+      "id": "d2c44d7c-982d-47b5-b513-908e61a779be",
+      "name": "OpenAI Chat Model (Auto-Fix JSON)",
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.3,
+      "position": [
+        336,
+        416
+      ],
+      "credentials": {
+        "openAiApi": {
+          "id": null,
+          "name": "",
+          "__aiGatewayManaged": true
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "leftValue": "={{ $json.output.es_lead }}",
+              "operator": {
+                "type": "boolean",
+                "operation": "true"
+              },
+              "rightValue": "",
+              "id": "07fad6df-1c1c-4c14-83f9-77fe2ecc6337"
+            }
+          ],
+          "combinator": "and"
+        },
+        "looseTypeValidation": true,
+        "options": {}
+      },
+      "id": "4053b1a1-f7c8-434b-ae71-9b5052572744",
+      "name": "Es Lead Valido",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        576,
+        0
+      ],
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "mode": "list",
+          "value": "1kpiLlyadZHrGZoY8wqNpSa2WbcyZvxE2NoUvk-kcUWg",
+          "cachedResultName": "PLM"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "list",
+          "value": "gid=0",
+          "cachedResultName": "LEADS"
+        },
+        "filtersUI": {
+          "values": [
+            {
+              "lookupColumn": "Email",
+              "lookupValue": "={{ $('Normalizar Datos').item.json.email }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "a8247ac9-2d44-4dba-b371-783b77dd7728",
+      "name": "Buscar Lead Existente",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        816,
+        -96
+      ],
+      "alwaysOutputData": true,
+      "retryOnFail": true,
+      "maxTries": 4,
+      "waitBetweenTries": 1500,
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "3aPuOVe7gkPdLzUc",
+          "name": "Google Sheets OAuth2 API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "leftValue": "={{ $json.row_number }}",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty",
+                "singleValue": true
+              },
+              "rightValue": "",
+              "id": "0e955825-022d-49df-879e-7a0644d3122d"
+            }
+          ],
+          "combinator": "and"
+        },
+        "looseTypeValidation": true,
+        "options": {}
+      },
+      "id": "1e385d87-4e66-4ec5-9a85-a71d34edd428",
+      "name": "Existe en Sheet",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        1088,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "appendOrUpdate",
+        "documentId": {
+          "__rl": true,
+          "mode": "list",
+          "value": "1kpiLlyadZHrGZoY8wqNpSa2WbcyZvxE2NoUvk-kcUWg",
+          "cachedResultName": "PLM"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "list",
+          "value": "gid=0",
+          "cachedResultName": "LEADS"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "matchingColumns": [
+            "Email"
+          ],
+          "value": {
+            "Nombre": "={{ $('Clasificar Lead con IA').item.json.output.nombre }}",
+            "Email": "={{ $('Normalizar Datos').item.json.email }}",
+            "Telefono": "={{ \"'\" + ($('Clasificar Lead con IA').item.json.output.telefono ?? \"\") }}",
+            "Operacion": "={{ $('Clasificar Lead con IA').item.json.output.operacion }}",
+            "Tipo_Propiedad": "={{ $('Clasificar Lead con IA').item.json.output.tipo_propiedad }}",
+            "Comuna": "={{ $('Clasificar Lead con IA').item.json.output.comuna }}",
+            "Presupuesto": "={{ $('Clasificar Lead con IA').item.json.output.presupuesto }}",
+            "Prioridad": "={{ $('Clasificar Lead con IA').item.json.output.prioridad }}",
+            "Requiere_Llamada": "={{ $('Clasificar Lead con IA').item.json.output.requiere_llamada }}",
+            "Resumen": "={{ $('Clasificar Lead con IA').item.json.output.resumen }}",
+            "Estado": "ACTUALIZADO",
+            "Respuesta_IA": "={{ JSON.stringify($('Clasificar Lead con IA').item.json.output) }}"
+          },
+          "schema": [
+            {
+              "id": "Nombre",
+              "displayName": "Nombre",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Email",
+              "displayName": "Email",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Telefono",
+              "displayName": "Telefono",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "Operacion",
+              "displayName": "Operacion",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "Tipo_Propiedad",
+              "displayName": "Tipo_Propiedad",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "Comuna",
+              "displayName": "Comuna",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "Presupuesto",
+              "displayName": "Presupuesto",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "Prioridad",
+              "displayName": "Prioridad",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "Requiere_Llamada",
+              "displayName": "Requiere_Llamada",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "Resumen",
+              "displayName": "Resumen",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "Estado",
+              "displayName": "Estado",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "Respuesta_IA",
+              "displayName": "Respuesta_IA",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "b3753f69-526c-44ea-83ad-56c2dd2d342d",
+      "name": "Actualizar Lead Existente",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        1360,
+        -112
+      ],
+      "retryOnFail": true,
+      "waitBetweenTries": 1500,
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "3aPuOVe7gkPdLzUc",
+          "name": "Google Sheets OAuth2 API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "appendOrUpdate",
+        "documentId": {
+          "__rl": true,
+          "mode": "list",
+          "value": "1kpiLlyadZHrGZoY8wqNpSa2WbcyZvxE2NoUvk-kcUWg",
+          "cachedResultName": "PLM"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "list",
+          "value": "gid=0",
+          "cachedResultName": "LEADS"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "matchingColumns": [
+            "Email"
+          ],
+          "value": {
+            "Nombre": "={{ $('Clasificar Lead con IA').item.json.output.nombre }}",
+            "Email": "={{ $('Normalizar Datos').item.json.email }}",
+            "Telefono": "={{ \"'\" + ($('Clasificar Lead con IA').item.json.output.telefono ?? \"\") }}",
+            "Operacion": "={{ $('Clasificar Lead con IA').item.json.output.operacion }}",
+            "Tipo_Propiedad": "={{ $('Clasificar Lead con IA').item.json.output.tipo_propiedad }}",
+            "Comuna": "={{ $('Clasificar Lead con IA').item.json.output.comuna }}",
+            "Presupuesto": "={{ $('Clasificar Lead con IA').item.json.output.presupuesto }}",
+            "Prioridad": "={{ $('Clasificar Lead con IA').item.json.output.prioridad }}",
+            "Requiere_Llamada": "={{ $('Clasificar Lead con IA').item.json.output.requiere_llamada }}",
+            "Resumen": "={{ $('Clasificar Lead con IA').item.json.output.resumen }}",
+            "Estado": "NUEVO",
+            "Respuesta_IA": "={{ JSON.stringify($('Clasificar Lead con IA').item.json.output) }}"
+          },
+          "schema": [
+            {
+              "id": "Nombre",
+              "displayName": "Nombre",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Email",
+              "displayName": "Email",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Telefono",
+              "displayName": "Telefono",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "Operacion",
+              "displayName": "Operacion",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "Tipo_Propiedad",
+              "displayName": "Tipo_Propiedad",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "Comuna",
+              "displayName": "Comuna",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "Presupuesto",
+              "displayName": "Presupuesto",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "Prioridad",
+              "displayName": "Prioridad",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "Requiere_Llamada",
+              "displayName": "Requiere_Llamada",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "Resumen",
+              "displayName": "Resumen",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "Estado",
+              "displayName": "Estado",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "Respuesta_IA",
+              "displayName": "Respuesta_IA",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "5a9a40de-8f9f-4b6b-a517-7b222bba4232",
+      "name": "Guardar Lead Nuevo",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        1360,
+        128
+      ],
+      "retryOnFail": true,
+      "waitBetweenTries": 1500,
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "3aPuOVe7gkPdLzUc",
+          "name": "Google Sheets OAuth2 API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "toRecipients": "={{ $('Normalizar Datos').item.json.email }}",
+        "subject": "Recibimos tu consulta - PLM Propiedades",
+        "bodyContent": "={{ $('AI Agent').item.json.output }}",
+        "additionalFields": {}
+      },
+      "id": "43732cea-0ef6-4920-ba7c-670eb3bc8941",
+      "name": "Enviar Confirmacion",
+      "type": "n8n-nodes-base.microsoftOutlook",
+      "typeVersion": 2,
+      "position": [
+        2416,
+        208
+      ],
+      "webhookId": "cc5467d5-38ff-4d61-a909-4c86be3d7bdb",
+      "retryOnFail": true,
+      "waitBetweenTries": 2000,
+      "credentials": {
+        "microsoftOutlookOAuth2Api": {
+          "id": "Lb96DPxkbrrHI8et",
+          "name": "Microsoft Outlook OAuth2 API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "mode": "list",
+          "value": "1kpiLlyadZHrGZoY8wqNpSa2WbcyZvxE2NoUvk-kcUWg",
+          "cachedResultName": "PLM"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "list",
+          "value": "gid=0",
+          "cachedResultName": "LEADS"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Email": "={{ $('Normalizar Datos').item.json.email }}",
+            "Estado": "DESCARTADO_SPAM",
+            "Resumen": "={{ $('Clasificar Lead con IA').item.json.output.resumen }}",
+            "Respuesta_IA": "={{ JSON.stringify($('Clasificar Lead con IA').item.json.output) }}"
+          },
+          "schema": [
+            {
+              "id": "Nombre",
+              "displayName": "Nombre",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Email",
+              "displayName": "Email",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Telefono",
+              "displayName": "Telefono",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "Operacion",
+              "displayName": "Operacion",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "Tipo_Propiedad",
+              "displayName": "Tipo_Propiedad",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "Comuna",
+              "displayName": "Comuna",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "Presupuesto",
+              "displayName": "Presupuesto",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "Prioridad",
+              "displayName": "Prioridad",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "Requiere_Llamada",
+              "displayName": "Requiere_Llamada",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "Resumen",
+              "displayName": "Resumen",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "Estado",
+              "displayName": "Estado",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "Respuesta_IA",
+              "displayName": "Respuesta_IA",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "09680e98-0dc9-45ad-8e06-161344e8e660",
+      "name": "Registrar Descartado",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        816,
+        112
+      ],
+      "retryOnFail": true,
+      "maxTries": 2,
+      "waitBetweenTries": 1500,
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "3aPuOVe7gkPdLzUc",
+          "name": "Google Sheets OAuth2 API"
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Eres un ejecutivo comercial de PLM Propiedades.\n\nRedacta un correo profesional, cálido y cercano para responder al cliente.\n\nDatos del lead:\nNombre: {{ $('Clasificar Lead con IA').item.json.output.nombre }}\nOperación: {{ $('Clasificar Lead con IA').item.json.output.operacion }}\nTipo de propiedad: {{ $('Clasificar Lead con IA').item.json.output.tipo_propiedad }}\nComuna: {{ $('Clasificar Lead con IA').item.json.output.comuna }}\nResumen: {{ $('Clasificar Lead con IA').item.json.output.resumen }}\n\nHorarios disponibles para reunión:\n{{ $('Calcular Horarios Disponibles').item.json.horarios_texto }}\n\n\"El cliente está respondiendo a una oferta de reunión previa. Las opciones que se le ofrecieron originalmente y corresponden a su registro son:\n\nOpción 1: \nOpción 2:\nOpción 3: \n\nSi el cliente dice algo como 'Me sirve la opción 3', tú debes interpretar que la fecha elegida es la que corresponde a la Opción 3.\"\n\nIncluye los horarios disponibles en el correo e invita al cliente a responder cuál le acomoda.\n\nSi el campo Nombre está vacío, usa un saludo genérico y profesional como \"Hola,\" o \"Estimado/a,\" — nunca escribas placeholders de plantilla como \"[Nombre del Cliente]\" o corchetes de ningún tipo, bajo ninguna circunstancia.\n\nFirma siempre exactamente así, sin agregar ni inventar datos de contacto:\nEquipo PLM Propiedades\n\nMáximo 150 palabras.\n\n",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        2112,
+        208
+      ],
+      "id": "8fec60b4-44bd-455b-acb6-2bbedaea8f5a",
+      "name": "AI Agent",
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 2000
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "gpt-4o-mini",
+          "mode": "list",
+          "cachedResultName": "gpt-4o-mini"
+        },
+        "builtInTools": {},
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.3,
+      "position": [
+        2112,
+        432
+      ],
+      "id": "11878687-d4ae-4fb4-bbfc-2dea4fe2addc",
+      "name": "OpenAI Chat Model1",
+      "credentials": {
+        "openAiApi": {
+          "id": null,
+          "name": "",
+          "__aiGatewayManaged": true
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "event",
+        "fromAllCalendars": false,
+        "calendarId": {
+          "__rl": true,
+          "value": "AQMkADAwATNiZmYAZS1iNDk3LTIzZGQALTAwAi0wMAoARgAAA_18G8ihX_tCtU0gww5_TS0HAG3VoR98vIFPj1LEUTwbnpQAAAIBBgAAAG3VoR98vIFPj1LEUTwbnpQAAAINMAAAAA==",
+          "mode": "list",
+          "cachedResultName": "Calendar"
+        },
+        "includeRecurringInstances": true,
+        "startDateTime": "={{ $now }}",
+        "endDateTime": "={{ $now.plus({ days: 7 }) }}"
+      },
+      "type": "n8n-nodes-base.microsoftOutlook",
+      "typeVersion": 2,
+      "position": [
+        1648,
+        -16
+      ],
+      "id": "4f388626-4beb-4aff-872d-ebb996b52bc8",
+      "name": "Get many events",
+      "webhookId": "f822ea27-9325-435f-aac7-4441109316e9",
+      "alwaysOutputData": true,
+      "retryOnFail": true,
+      "waitBetweenTries": 1500,
+      "credentials": {
+        "microsoftOutlookOAuth2Api": {
+          "id": "Lb96DPxkbrrHI8et",
+          "name": "Microsoft Outlook OAuth2 API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const TIMEZONE = 'America/Santiago';\nconst HORA_INICIO = 9;\nconst HORA_FIN = 18;\nconst DURACION_MIN = 60;\nconst DIAS_A_REVISAR = 10;\nconst SLOTS_NECESARIOS = 3;\n\nconst eventos = $input.all().map(i => i.json).filter(e => e && Object.keys(e).length > 0);\nfunction getStart(e){ return e.start?.dateTime || e.start || e.startDateTime; }\nfunction getEnd(e){ return e.end?.dateTime || e.end || e.endDateTime; }\n\nconst busy = eventos\n  .map(e => ({ start: new Date(getStart(e)), end: new Date(getEnd(e)) }))\n  .filter(e => !isNaN(e.start) && !isNaN(e.end));\n\nfunction overlaps(aS, aE, bS, bE) { return aS < bE && aE > bS; }\n\n// Offset real de Chile para una fecha dada (ajusta solo cuando hay cambio de horario)\nfunction offsetMinutos(date) {\n  const dtf = new Intl.DateTimeFormat('en-US', {\n    timeZone: TIMEZONE, hourCycle: 'h23',\n    year: 'numeric', month: '2-digit', day: '2-digit',\n    hour: '2-digit', minute: '2-digit', second: '2-digit'\n  });\n  const p = dtf.formatToParts(date).reduce((a, x) => (a[x.type] = x.value, a), {});\n  const comoUTC = Date.UTC(p.year, p.month - 1, p.day, p.hour, p.minute, p.second);\n  return (comoUTC - date.getTime()) / 60000;\n}\n\nfunction formatChile(date) {\n  return date.toLocaleString('es-CL', {\n    weekday: 'long', day: '2-digit', month: 'long',\n    hour: '2-digit', minute: '2-digit', timeZone: TIMEZONE\n  });\n}\n\nconst now = new Date();\nconst slots = [];\n\nfor (let d = 0; d < DIAS_A_REVISAR && slots.length < SLOTS_NECESARIOS; d++) {\n  const cursor = new Date(now.getTime() + d * 86400000);\n  const fechaSantiago = cursor.toLocaleDateString('en-CA', { timeZone: TIMEZONE });\n  const weekday = cursor.toLocaleDateString('es-CL', { weekday: 'short', timeZone: TIMEZONE }).toLowerCase();\n  if (weekday.startsWith('sá') || weekday.startsWith('do')) continue;\n\n  for (let hora = HORA_INICIO; hora < HORA_FIN && slots.length < SLOTS_NECESARIOS; hora++) {\n    const tentativoUTC = new Date(`${fechaSantiago}T${String(hora).padStart(2, '0')}:00:00Z`);\n    const offset = offsetMinutos(tentativoUTC);\n    const slotStart = new Date(tentativoUTC.getTime() - offset * 60000);\n    const slotEnd = new Date(slotStart.getTime() + DURACION_MIN * 60000);\n\n    if (slotStart <= now) continue;\n    const ocupado = busy.some(b => overlaps(slotStart, slotEnd, b.start, b.end));\n    if (!ocupado) slots.push({ iso: slotStart.toISOString(), texto: formatChile(slotStart) });\n  }\n}\n\nreturn [{\n  json: {\n    opcion_1: slots[0]?.iso || \"\",\n    opcion_2: slots[1]?.iso || \"\",\n    opcion_3: slots[2]?.iso || \"\",\n    horarios_disponibles: slots,\n    horarios_texto: slots.map((s, i) => `${i + 1}. ${s.texto}`).join('\\n')\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1856,
+        -16
+      ],
+      "id": "a2edc91f-1ac1-4491-9134-bb9d344da90d",
+      "name": "Calcular Horarios Disponibles"
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "documentId": {
+          "__rl": true,
+          "cachedResultName": "PLM",
+          "mode": "list",
+          "value": "1kpiLlyadZHrGZoY8wqNpSa2WbcyZvxE2NoUvk-kcUWg"
+        },
+        "sheetName": {
+          "__rl": true,
+          "cachedResultName": "LEADS",
+          "mode": "list",
+          "value": "gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "matchingColumns": [
+            "Email"
+          ],
+          "schema": [
+            {
+              "canBeUsedToMatch": true,
+              "defaultMatch": false,
+              "display": true,
+              "displayName": "Email",
+              "id": "Email",
+              "required": false,
+              "type": "string"
+            },
+            {
+              "canBeUsedToMatch": false,
+              "defaultMatch": false,
+              "display": true,
+              "displayName": "opcion_1",
+              "id": "opcion_1",
+              "required": false,
+              "type": "string"
+            },
+            {
+              "canBeUsedToMatch": false,
+              "defaultMatch": false,
+              "display": true,
+              "displayName": "opcion_2",
+              "id": "opcion_2",
+              "required": false,
+              "type": "string"
+            },
+            {
+              "canBeUsedToMatch": false,
+              "defaultMatch": false,
+              "display": true,
+              "displayName": "opcion_3",
+              "id": "opcion_3",
+              "required": false,
+              "type": "string"
+            }
+          ],
+          "value": {
+            "Email": "={{ $('Normalizar Datos').item.json.email }}",
+            "opcion_1": "={{ $json.opcion_1 }}",
+            "opcion_2": "={{ $json.opcion_2 }}",
+            "opcion_3": "={{ $json.opcion_3 }}"
+          }
+        },
+        "options": {}
+      },
+      "id": "18acdf31-920e-49a8-bdd8-4f2904e391d2",
+      "name": "Guardar Opciones de Reunión",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        1856,
+        208
+      ],
+      "retryOnFail": true,
+      "waitBetweenTries": 1500,
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "3aPuOVe7gkPdLzUc",
+          "name": "Google Sheets OAuth2 API"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Outlook Trigger - Correo Nuevo": {
+      "main": [
+        [
+          {
+            "node": "Normalizar Datos",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Normalizar Datos": {
+      "main": [
+        [
+          {
+            "node": "Clasificar Lead con IA",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Clasificar Lead con IA": {
+      "main": [
+        [
+          {
+            "node": "Es Lead Valido",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Clasificar Lead con IA",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Validar Formato JSON del Lead": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "Clasificar Lead con IA",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model (Auto-Fix JSON)": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Validar Formato JSON del Lead",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Es Lead Valido": {
+      "main": [
+        [
+          {
+            "node": "Buscar Lead Existente",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Registrar Descartado",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Buscar Lead Existente": {
+      "main": [
+        [
+          {
+            "node": "Existe en Sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Existe en Sheet": {
+      "main": [
+        [
+          {
+            "node": "Actualizar Lead Existente",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Guardar Lead Nuevo",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Guardar Lead Nuevo": {
+      "main": [
+        [
+          {
+            "node": "Get many events",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Actualizar Lead Existente": {
+      "main": [
+        [
+          {
+            "node": "Get many events",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Enviar Confirmacion",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model1": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get many events": {
+      "main": [
+        [
+          {
+            "node": "Calcular Horarios Disponibles",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Calcular Horarios Disponibles": {
+      "main": [
+        [
+          {
+            "node": "Guardar Opciones de Reunión",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Guardar Opciones de Reunión": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Enviar Confirmacion": {
+      "main": [
+        []
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": true,
+    "timeSavedMode": "fixed",
+    "errorWorkflow": "qUCrL8nlG0qN494i",
+    "callerPolicy": "workflowsFromSameOwner"
+  },
+  "versionId": "acf56273-1afb-4d74-a8a3-74f8d23b7870",
+  "meta": {
+    "aiBuilderAssisted": true,
+    "builderVariant": "mcp",
+    "templateCredsSetupCompleted": true,
+    "instanceId": "4e85cd5b3862d24f82ee8a3d7106ac7eedfb716a876ffa1b49fcd28423a03157"
+  },
+  "nodeGroups": [],
+  "id": "FHFhaq4dYuQMm4Bj",
+  "tags": []
+}
